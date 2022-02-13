@@ -20,7 +20,7 @@ public class APIXClientRequest {
         self.appKey = appKey
     }
     
-    public func request(forHTTPMethod httpMethod: HTTPMethod, entity: String? = nil, method: String, parameters: [String : String] = [:], httpBody: [String : String]? = nil) -> URLRequest? {
+    public func request(forHTTPMethod httpMethod: HTTPMethod, entity: String? = nil, method: String, parameters: [String : String] = [:], httpBody: [String : Any]? = nil) -> URLRequest? {
         var httpBodyData: Data? = nil
         
         if let httpBody = httpBody {
@@ -60,8 +60,12 @@ public class APIXClientRequest {
         return request(forHTTPMethod: .get, entity: entity, method: method, parameters: parameters)
     }
     
-    public func postRequest(forEntity entity: String? = nil, method: String, httpBody: [String : String] = [:]) -> URLRequest? {
-        return request(forHTTPMethod: .post, entity: entity, method: method, httpBody: httpBody)
+    public func postRequest(forEntity entity: String? = nil, method: String, parameters: [String : String] = [:], httpBody: [String : Any] = [:]) -> URLRequest? {
+        return request(forHTTPMethod: .post, entity: entity, method: method, parameters: parameters, httpBody: httpBody)
+    }
+    
+    public func putRequest(forEntity entity: String? = nil, method: String, parameters: [String : String] = [:], httpBody: [String : Any] = [:]) -> URLRequest? {
+        return request(forHTTPMethod: .put, entity: entity, method: method, parameters: parameters, httpBody: httpBody)
     }
 }
 
