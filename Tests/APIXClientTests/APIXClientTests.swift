@@ -2,8 +2,8 @@ import XCTest
 @testable import APIXClient
 
 final class APIXClientTests: XCTestCase {
-    private let apiKey = "2e9bc6c94a4cbdfe2a31d2df79103a5eb3702eaf5d7018d47a774e9540a8ec29"
-    private let appKey = "2e9bc6c94a4cbdfe2a31d2df79103a5eb3702eaf5d7018d47a774e9540a8ec29"
+    private let apiKey = "92e42e068f8f5ee625ba59e7e7144d74c24618b9631f75d70ee3cc1faa7060f1"
+    private let appKey = "NTgxZWYxOWQ1YWYxNTgxOWFiY2E3YWUwY2QxNDk0M2IwNjJlM2M0MmU4YmEwMzRhMTUwNWEzN2I4ZTU3ZmJkMQ=="
     
     func testAPIXClientRequestRequestCreation() throws {
         let apiXClientRequest = APIXClientRequest(apiKey: apiKey, appKey: appKey)
@@ -55,7 +55,7 @@ final class APIXClientTests: XCTestCase {
         ]
         let httpBodyData = try? JSONSerialization.data(withJSONObject: httpBody as Any)
         let appSessionID = apiXClientRequest.buildAppSessionID(httpBody: httpBodyData, dateString: "Sat, 12 Feb 2022 07:52:00 GMT")
-        let expectedAppSessionID = "5d9d593814b5392e90295f280ebef4477422beb04cf250ac4645042f4b3a2489"  // Must be obtained from API-X Endpoint
+        let expectedAppSessionID = "18d45d1991f2d2d5c1f2e21c0560bf164a7566a8088dcb2e2168b6bb985c8a0b"  // Must be obtained from API-X Endpoint
         
         XCTAssertEqual(appSessionID, expectedAppSessionID)
     }
@@ -63,7 +63,7 @@ final class APIXClientTests: XCTestCase {
     func testAPIXClientRequestBuildAppSessionIDWithoutHTTPBody() {
         let apiXClientRequest = APIXClientRequest(apiKey: apiKey, appKey: appKey)
         let appSessionID = apiXClientRequest.buildAppSessionID(httpBody: nil, dateString: "Sat, 12 Feb 2022 07:52:00 GMT")
-        let expectedAppSessionID = "6831ad0ab0bb84bc964c4200a73064439fca39f5de169168be8e3d071d1ef1b0"
+        let expectedAppSessionID = "e0de9837f57b939a8730d35972977cebadb705de9a2459a552d847fa6a45432a"
         
         XCTAssertEqual(appSessionID, expectedAppSessionID)
     }
@@ -84,15 +84,11 @@ final class APIXClientTests: XCTestCase {
          * The final URL + endpoint should be https://test-apix.bryanmorfe.com/apix/test (exclusing required parameters added by the API-X Client)
          */
         let apiXClientRequest = APIXClientRequest(apiKey: apiKey, appKey: appKey)
-        apiXClientRequest.scheme = APIXClient.Constants.URLScheme.http
-        apiXClientRequest.host = "localhost"
-        apiXClientRequest.port = 3000
+        apiXClientRequest.scheme = APIXClient.Constants.URLScheme.https
+        apiXClientRequest.host = "apix-test.bryanmorfe.com"
         let entity = "/apix"
         let method = "/test"
-        let request = apiXClientRequest.getRequest(forEntity: entity, method: method, parameters: [
-            "message": "Hello, there",
-            "reftag": "test_api_x"
-        ])
+        let request = apiXClientRequest.getRequest(forEntity: entity, method: method)
         
         XCTAssertNotNil(request)
         
@@ -102,14 +98,14 @@ final class APIXClientTests: XCTestCase {
                 XCTAssertNotNil(response)
                                 
                 if let response = response {
-                    XCTAssertEqual(response["yourMessage"] as? String, "Hello, there")
-                    XCTAssertEqual(response["yourReftag"] as? String, "test_api_x")
+                    XCTAssertEqual(response["success"] as? Bool, true)
+                    XCTAssertNotNil(response["message"] as? String)
                 }
                 
                 expectation.fulfill()
             }
         }
         
-        wait(for: [expectation], timeout: 10.0)
+        wait(for: [expectation], timeout: 15.0)
     }
 }

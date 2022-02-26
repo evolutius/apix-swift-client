@@ -12,7 +12,7 @@ public extension APIXClient {
     struct Constants {
         public struct URLScheme {
             public static let http = "http"
-            public static let https = "http"
+            public static let https = "https"
         }
         
         public struct QueryItemKey {
