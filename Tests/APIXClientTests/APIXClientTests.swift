@@ -6,10 +6,10 @@ final class APIXClientTests: XCTestCase {
     private let appKey = "NTgxZWYxOWQ1YWYxNTgxOWFiY2E3YWUwY2QxNDk0M2IwNjJlM2M0MmU4YmEwMzRhMTUwNWEzN2I4ZTU3ZmJkMQ=="
     
     func testAPIXClientRequestRequestCreation() throws {
-        let apiXClientRequest = APIXClientRequest(apiKey: apiKey, appKey: appKey)
-        apiXClientRequest.scheme = APIXClient.Constants.URLScheme.https
-        apiXClientRequest.host = "api.example.com"
-        apiXClientRequest.port = 8443
+        let requestBuilder = APIXClientRequestBuilder(apiKey: apiKey, appKey: appKey)
+        requestBuilder.scheme = APIXClient.Constants.URLScheme.https
+        requestBuilder.host = "api.example.com"
+        requestBuilder.port = 8443
         let entity = "/entity"
         let method = "/method"
         let httpBody = [
@@ -17,7 +17,7 @@ final class APIXClientTests: XCTestCase {
             "bodyParam2": "value2"
         ]
         
-        let request = apiXClientRequest.request(forHTTPMethod: .post, entity: entity, method: method, parameters: [
+        let request = requestBuilder.request(for: .post, entity: entity, method: method, parameters: [
             "param1": "value1",
             "param2": "value2"
         ], httpBody: httpBody)
@@ -28,10 +28,10 @@ final class APIXClientTests: XCTestCase {
         XCTAssertNotNil(url)
         
         if let url = url, let request = request {
-            XCTAssertEqual(request.httpMethod, APIXClientRequest.HTTPMethod.post.rawValue)
-            XCTAssertEqual(url.port, apiXClientRequest.port)
-            XCTAssertEqual(url.scheme, apiXClientRequest.scheme)
-            XCTAssertEqual(url.host, apiXClientRequest.host)
+            XCTAssertEqual(request.httpMethod, APIXClientRequestBuilder.HTTPMethod.post.rawValue)
+            XCTAssertEqual(url.port, requestBuilder.port)
+            XCTAssertEqual(url.scheme, requestBuilder.scheme)
+            XCTAssertEqual(url.host, requestBuilder.host)
             XCTAssertEqual(url.relativePath, NSString.path(withComponents: [entity, method]))
             
             XCTAssertNotNil(request.httpBody)
@@ -47,53 +47,22 @@ final class APIXClientTests: XCTestCase {
         }
     }
     
-    func testAPIXClientRequestBuildAppSessionIDWithHTTPBody() {
-        let apiXClientRequest = APIXClientRequest(apiKey: apiKey, appKey: appKey)
-        let httpBody = [
-            "bodyParam1": "value1",
-            "bodyParam2": "value2",
-        ]
-        let httpBodyData = try? JSONSerialization.data(withJSONObject: httpBody as Any)
-        let appSessionID = apiXClientRequest.buildAppSessionID(httpBody: httpBodyData, dateString: "Sat, 12 Feb 2022 07:52:00 GMT")
-        let expectedAppSessionID = "18d45d1991f2d2d5c1f2e21c0560bf164a7566a8088dcb2e2168b6bb985c8a0b"  // Must be obtained from API-X Endpoint
-        
-        XCTAssertEqual(appSessionID, expectedAppSessionID)
-    }
-    
-    func testAPIXClientRequestBuildAppSessionIDWithoutHTTPBody() {
-        let apiXClientRequest = APIXClientRequest(apiKey: apiKey, appKey: appKey)
-        let appSessionID = apiXClientRequest.buildAppSessionID(httpBody: nil, dateString: "Sat, 12 Feb 2022 07:52:00 GMT")
-        let expectedAppSessionID = "e0de9837f57b939a8730d35972977cebadb705de9a2459a552d847fa6a45432a"
-        
-        XCTAssertEqual(appSessionID, expectedAppSessionID)
-    }
-    
-    func testAPIXClientRequestSHA256() throws {
-        let sampleData = "SomeData".data(using: .utf8)!
-        let hash256 = "e2be1ef8ab38221875b44004a5f801ccd771648047d384b059031a6c65ca6a6f"
-        
-        let digest = APIXClientRequest.sha256Digest(forData: sampleData)
-        
-        XCTAssertEqual(APIXClientRequest.hexDigest(forDigest: digest), hash256)
-    }
-    
     func testAPIXClient() throws {
         let expectation = XCTestExpectation(description: "Reached endpoint successfully")
         
-        /** This is a test endpoint that should always be available
-         * The final URL + endpoint should be https://test-apix.bryanmorfe.com/apix/test (exclusing required parameters added by the API-X Client)
-         */
-        let apiXClientRequest = APIXClientRequest(apiKey: apiKey, appKey: appKey)
-        apiXClientRequest.scheme = APIXClient.Constants.URLScheme.https
-        apiXClientRequest.host = "apix-test.bryanmorfe.com"
+        /// This is a test endpoint that should always be available
+        /// The final URL + endpoint should be https://test-apix.bryanmorfe.com/apix/test (exclusing required parameters added by the API-X Client)
+        let requestBuilder = APIXClientRequestBuilder(apiKey: apiKey, appKey: appKey)
+        requestBuilder.scheme = APIXClient.Constants.URLScheme.https
+        requestBuilder.host = "apix-test.bryanmorfe.com"
         let entity = "/apix"
         let method = "/test"
-        let request = apiXClientRequest.getRequest(forEntity: entity, method: method)
+        let request = requestBuilder.getRequest(for: entity, method: method)
         
         XCTAssertNotNil(request)
         
         if let request = request {
-            APIXClient.shared.makeRequest(urlRequest: request) { response, error in
+            APIXClient.shared.execute(with: request) { response, error in
                 XCTAssertNil(error)
                 XCTAssertNotNil(response)
                                 
@@ -107,5 +76,49 @@ final class APIXClientTests: XCTestCase {
         }
         
         wait(for: [expectation], timeout: 15.0)
+    }
+    
+    func testAPIXClientBuilderPerformanceWithNoParametersOrBody() {
+        let requestBuilder = APIXClientRequestBuilder(apiKey: apiKey, appKey: appKey)
+        requestBuilder.scheme = APIXClient.Constants.URLScheme.https
+        requestBuilder.host = "apix-test.bryanmorfe.com"
+        let entity = "/apix"
+        let method = "/test"
+        
+        measure {
+            let _ = requestBuilder.request(for: .get, entity: entity, method: method)
+        }
+    }
+    
+    func testAPIXClientBuilderPerformanceWithParametersAndBody() {
+        let requestBuilder = APIXClientRequestBuilder(apiKey: apiKey, appKey: appKey)
+        requestBuilder.scheme = APIXClient.Constants.URLScheme.https
+        requestBuilder.host = "apix-test.bryanmorfe.com"
+        let entity = "/apix"
+        let method = "/test"
+        
+        measure {
+            let _ = requestBuilder.request(
+                for: .get,
+                entity: entity,
+                method: method,
+                parameters: [
+                    "someKey1" : "someValue1",
+                    "someKey2" : "someValue2",
+                    "someKey3" : "someValue3",
+                    "someKey4" : "someValue4",
+                    "someKey5" : "someValue5",
+                    "someKey6" : "someValue6",
+                ],
+                httpBody: [
+                    "someKey1" : [0, 1, 2, 3, 4, 5, 6],
+                    "someKey2" : ["someKey1" : "someValue1", "someKey2" : "someValue2"],
+                    "someKey3" : "someValue3",
+                    "someKey4" : 566,
+                    "someKey5" : 0.314159,
+                    "someKey6" : true,
+                ]
+            )
+        }
     }
 }

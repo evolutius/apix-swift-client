@@ -1,6 +1,4 @@
-# APIXClient
-
-## Summary
+# ``APIXClient``
 
 A framework for building API-X based clients.
 
@@ -11,3 +9,17 @@ server caracterized for its ease of use and high customizability, while maintain
 a high degree of security. Due to its security features, a specific type of
 message must accompany each request. APIXClient abstracts all of that functionality
 and ensuring the communication is secure so that you can focus on building your apps.
+
+## Topics
+
+### Getting Started
+
+- <doc:BuildingAClient>
+- <doc:RockSolidAPIXClient>
+- ``APIXClient/APIXClient``
+- ``APIXClientRequestBuilder``
+
+### Creating Requests
+
+- ``APIXClientRequestBuilder``
+- ``APIXClient/APIXClient/Constants/URLScheme``
