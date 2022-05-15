@@ -40,8 +40,8 @@ If the test passes, then the server will verify that the request comes from
 an authorized application. This has a shared responsibility because the user
 must ensure that the API and Application key are correct and valid for the
 API-X server in question. `APIXClient` will take care of the rest. This
-information is passed when constructing a ``APIXClientRequestBuilder``
-object. See ``APIXClientRequestBuilder/init(apiKey:appKey:)`` for more
+information is passed when constructing a ``APIXClient/APIXClient/Request``
+object. See ``APIXClient/APIXClient/Request/init(apiKey:appKey:)`` for more
 details.
 
 If the previous test passes, then the server will verify that the request
@@ -59,11 +59,11 @@ received before. Requests are considered identical if they have the same
 session ID. API-X servers can opt-out of this security feature, however, that
 is discouraged, and as a client, it is better to err in the side of caution
 and avoid sending identical requests. It is the responsibility of the user to
-discard requests when they are sent. The ``APIXClientRequestBuilder`` object
-will generate new request application session IDs for users.
+discard requests when they are sent. The ``APIXClient/APIXClient/Request``
+object will generate new request application session IDs for users.
 - The request must have a valid application session ID. Users must make sure
 that the API and Application key are correct and issued by the API-X server
-in question. The ``APIXClientRequestBuilder`` will do the heavy lifting and
+in question. The ``APIXClient/APIXClient/Request`` will do the heavy lifting and
 generate a new application session ID for every request created.
 
 If the previous test passes, then the API-X server will verify that the

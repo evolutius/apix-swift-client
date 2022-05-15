@@ -44,10 +44,10 @@ to exist throughout this sample implementation.
 ```swift
 public class RecommendXClient {
     public static let shared = RecommendXClient()
-    private let requestBuilder = APIXClientRequestBuilder(apiKey: Constants.apiKey, appKey: Constants.appKey)
+    private let requestBuilder = APIXClient.Request(apiKey: Constants.apiKey, appKey: Constants.appKey)
     private let apiXClient = APIXClient.shared
 
-    private func recommendations(for entity: String, parameters: [String : String], options: [RecommendX.Option]) completion handler: @escaping (RecommendX.Response?, Error?) -> Void) {
+    private func recommendations(for entity: String, parameters: [String : String], options: [RecommendX.Option]) async throws -> RecommendX.Response {
         let additionalParameters: [String : String] = [
             Constants.ItemQueryName.recommendationOptions: RecommendX.optionsQueryValue(from: options)
         ]
@@ -58,25 +58,9 @@ public class RecommendXClient {
             method: Constants.Methods.recommendation,
             parameters: urlQueryParameters
         )
-        apiXClient.execute(with: request) {
-            data, error in
-            guard let error == nil else {
-                handler(nil, error)
-                return
-            }
-
-            guard let data = data else {
-                handler(nil, RecommendXError(kind: .invalidData))
-                return
-            }
-
-            guard let recommendXResponse = self.response(from: data) else {
-                handler(nil, RecommendXError(kind: .invalidDataType))
-                return
-            }
-
-            handler(recommendXResponse, nil)
-        }
+        let json = try await apixClient.json(from: request)
+        let decoder = JSONDecoder()
+        return try decoder.decode(RecommendX.Response.self, from: data)
     }
 }
 ```
@@ -90,26 +74,16 @@ extend the `RecommendXClient` with a method to obtain song recommendations.
 
 ```swift
 public extension RecommendXClient {
-    func songRecommendations(with genres: [RecommendX.SongGenre], options: [RecommendX.Option], completion handler: @escaping (RecommendX.SongResponse?, Error?) -> Void) {
-        recommendations(
+    func songRecommendations(with genres: [RecommendX.SongGenre], options: [RecommendX.Option]) async throws -> RecommendX.SongResponse {
+        let recommendXResponse = try await recommendations(
             for: Constants.Entity.song,
             parameters: [
                 Constants.ItemQueryName.SongGenreList: RecommendX.genresQueyValue(from: genres),
             ],
-            options: options,
-        ) {
-            recommendXResponse, error in
-            guard let error == nil else {
-                handler(nil, error)
-                return
-            }
+            options: options)
 
-            guard let songRecommendationResponse = recommendXResponse as? RecommendX.SongRecommendation else {
-                handler(nil, RecommendXError(kind: .invalidDataType))
-                return
-            }
-
-            handler(songRecommendationResponse, nil)
+        guard let songRecommendationResponse = recommendXResponse as? RecommendX.SongRecommendation else {
+            throw RecommendXError(kind: .invalidDataType))
         }
     }
 }
@@ -120,38 +94,32 @@ song recommendations using the `RecommendXClient`. Users of this client can now
 obtain song recommendations leveraging this abstraction:
 
 ```swift
-RecommendXClient.shared.songRecommendations(
-    with: [
-        .instrumental,
-        .jazz,
-        .live
-    ],
-    options: [
-        .sortByPopularity,          // Sorted by popularity
-        .filter(ratedBelow: 3),     // Minimum 3 out of 5 stars rating
-        .filter(durationAbove: 6),  // Maximum 10 minutes of duration
-        .maxResults(500),           // Return a maximum of 500 songs
-    ]
-) {
-    response, error in
-    guard let error == nil else {
-        // Log/Display error
-        return
-    }
+Task {
+    do {
+        let response = RecommendXClient.shared.songRecommendations(
+            with: [
+                .instrumental,
+                .jazz,
+                .live
+            ],
+            options: [
+                .sortByPopularity,          // Sorted by popularity
+                .filter(ratedBelow: 3),     // Minimum 3 out of 5 stars rating
+                .filter(durationAbove: 6),  // Maximum 10 minutes of duration
+                .maxResults(500),           // Return a maximum of 500 songs
+            ])
+        let songRecommendations = response.songs()  // Builds and returns [RecommendX.Song]
 
-    guard let response = response else {
-        // Log/Display error
-        return
-    }
-
-    let songRecommendations = response.songs()  // Builds and returns [RecommendX.Song]
-
-    DispatchQueue.main.async {
-        self.displaySongs(songRecommendations)
+        DispatchQueue.main.async {
+            self.displaySongs(songRecommendations)
+        }
+        
+    } catch {
+        // Handle error
     }
 }
 ```
 
 The user simply specifies the genres of songs they'd want, the options, and finally,
-in the completion handler, handle the response by either logging/display errors or
-displaying the song recommendations perhaps in a collection view.
+when the response is returned, handle the it by either logging/display errors or
+displaying the song recommendations perhaps in a list.

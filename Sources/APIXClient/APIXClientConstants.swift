@@ -47,6 +47,9 @@ public extension APIXClient {
             
             /// A string representation of the Accept type HTTP header field name.
             public static let acceptType = "Content-Type"
+            
+            /// A string representation of the API-X Salt HTTP header field name.
+            public static let salt = "API-X-Salt"
         }
         
         /// A structure containing utility HTTP header field values used when creating API-X requests.

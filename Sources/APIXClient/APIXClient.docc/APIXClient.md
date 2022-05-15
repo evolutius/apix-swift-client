@@ -17,9 +17,9 @@ and ensuring the communication is secure so that you can focus on building your 
 - <doc:BuildingAClient>
 - <doc:RockSolidAPIXClient>
 - ``APIXClient/APIXClient``
-- ``APIXClientRequestBuilder``
+- ``APIXClient/APIXClient/Request``
 
 ### Creating Requests
 
-- ``APIXClientRequestBuilder``
+- ``APIXClient/APIXClient/Request``
 - ``APIXClient/APIXClient/Constants/URLScheme``
